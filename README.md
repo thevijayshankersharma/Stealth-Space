@@ -106,3 +106,31 @@ If you'd like to contribute to **Stealth Space**, feel free to submit a pull req
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+/stealth-space
+│
+├── /backend
+│   ├── /config             # Configuration files (e.g., database, environment)
+│   ├── /controllers        # Controllers for handling request logic
+│   ├── /models             # Data models (e.g., Mongoose models)
+│   ├── /routes             # API routes
+│   ├── /utils              # Utility functions and helpers
+│   ├── index.js            # Entry point for backend server
+│   ├── .env                # Environment variables
+│   ├── package.json        # Backend dependencies
+│   └── package-lock.json   # Lockfile for backend
+│
+└── /frontend
+    ├── /public             # Static assets (images, fonts, etc.)
+    ├── /src
+    │   ├── /app            # Main app folder
+    │   │   ├── /components # Reusable React components
+    │   │   ├── /pages      # Pages (e.g., login, dashboard)
+    │   │   ├── /styles     # CSS/SCSS files or global styles
+    │   │   └── /hooks      # Custom React hooks (optional)
+    │   ├── /services       # API services and utilities for data fetching
+    │   └── /context        # Context API-related files (optional)
+    ├── next.config.mjs     # Next.js configuration
+    ├── tailwind.config.js  # Tailwind CSS configuration
+    ├── package.json        # Frontend dependencies
+    └── package-lock.json   # Lockfile for frontend
