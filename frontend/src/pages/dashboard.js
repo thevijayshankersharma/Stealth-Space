@@ -1,6 +1,8 @@
-// pages/dashboard.js
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Head from 'next/head';
+import { motion } from 'framer-motion';
+import { LogOut, Mail, User, Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
@@ -23,7 +25,7 @@ const Dashboard = () => {
         setUser(data);
       } catch (err) {
         setError(err.message);
-        router.push("/login"); // Redirect to login on error
+        router.push("/login");
       } finally {
         setLoading(false);
       }
@@ -33,51 +35,114 @@ const Dashboard = () => {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token from local storage
-    router.push("/login"); // Redirect to login page
+    localStorage.removeItem("token");
+    router.push("/login");
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-blue-700">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-white text-2xl"
+        >
+          Loading...
+        </motion.div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-blue-700">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-white text-2xl"
+        >
+          {error}
+        </motion.div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h2 className="text-2xl mb-4">Dashboard</h2>
-      <p>Email: {user.email}</p>
-      {user.username && <p>Username: {user.username}</p>}
-
-      {/* Render Avatar */}
-      {user.avatar ? (
-        <img
-          src={user.avatar}
-          alt="User Avatar"
-          className="w-20 h-20 rounded-full mb-4"
-          onError={(e) => {
-            e.target.src = "/default-avatar.png";
-          }} // Correct fallback path
-        />
-      ) : (
-        <img
-          src="/default-avatar.png"
-          alt="Default Avatar"
-          className="w-20 h-20 rounded-full mb-4"
-        />
-      )}
-
-      <div className="mt-4">
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white p-2 rounded"
+    <>
+      <Head>
+        <title>Dashboard - Stealth Space</title>
+        <meta name="description" content="Your Stealth Space Dashboard" />
+      </Head>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-blue-700 py-12 px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-2xl"
         >
-          Logout
-        </button>
+          <div className="text-center">
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Welcome to Your Dashboard
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Here's your account information
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-6">
+            <div className="flex justify-center">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  className="w-32 h-32 rounded-full border-4 border-blue-500"
+                  onError={(e) => {
+                    e.target.src = "/default-avatar.png";
+                  }}
+                />
+              ) : (
+                <img
+                  src="/default-avatar.png"
+                  alt="Default Avatar"
+                  className="w-32 h-32 rounded-full border-4 border-blue-500"
+                />
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Mail className="h-5 w-5 text-gray-400" />
+                <span className="text-gray-700">{user.email}</span>
+              </div>
+              {user.username && (
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-700">{user.username}</span>
+                </div>
+              )}
+              <div className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-gray-400" />
+                <span className="text-gray-700">Account secured with end-to-end encryption</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <button
+                onClick={handleLogout}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                  <LogOut className="h-5 w-5 text-red-500 group-hover:text-red-400" aria-hidden="true" />
+                </span>
+                Logout
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </>
   );
 };
 
