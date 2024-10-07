@@ -1,21 +1,34 @@
+// File: Frontend/src/utils/socket.js
+
 import io from 'socket.io-client';
 
-const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
+let socket;
 
 export const initializeSocket = (userId) => {
-  socket.emit('login', userId);
+  socket = io(process.env.NEXT_PUBLIC_BACKEND_URL);
+  socket.emit('join', userId);
 };
 
-export const sendMessage = (message) => {
-  socket.emit('sendMessage', message);
+export const sendPrivateMessage = (recipient, content) => {
+  if (socket) {
+    socket.emit('privateMessage', { recipient, content });
+  }
 };
 
 export const onNewMessage = (callback) => {
-  socket.on('newMessage', callback);
+  if (socket) {
+    socket.on('newMessage', callback);
+  }
 };
 
-export const onUserStatus = (callback) => {
-  socket.on('userStatus', callback);
+export const onMessageSent = (callback) => {
+  if (socket) {
+    socket.on('messageSent', callback);
+  }
 };
 
-export default socket;
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+  }
+};

@@ -1,41 +1,29 @@
-const User = require('./models/User');
+// File: backend/socketEvents.js
 
-const handleSocketConnection = (socket, io) => {
-  console.log('New client connected');
+const Message = require('./models/Message');
 
-  socket.on('login', async (userId) => {
-    try {
-      await User.findByIdAndUpdate(userId, { isOnline: true });
-      socket.userId = userId;
-      io.emit('userStatus', { userId, status: 'online' });
-    } catch (error) {
-      console.error('Error updating user status:', error);
-    }
-  });
+module.exports = (io) => {
+  io.on('connection', (socket) => {
+    console.log('A user connected');
 
-  socket.on('disconnect', async () => {
-    console.log('Client disconnected');
-    if (socket.userId) {
+    socket.on('join', (userId) => {
+      socket.join(userId);
+      console.log(`User ${userId} joined their room`);
+    });
+
+    socket.on('privateMessage', async ({ sender, recipient, content }) => {
       try {
-        await User.findByIdAndUpdate(socket.userId, { isOnline: false });
-        io.emit('userStatus', { userId: socket.userId, status: 'offline' });
+        const message = new Message({ sender, recipient, content });
+        await message.save();
+        io.to(recipient).emit('newMessage', message);
+        io.to(sender).emit('messageSent', message);
       } catch (error) {
-        console.error('Error updating user status:', error);
+        console.error('Error saving message:', error);
       }
-    }
-  });
+    });
 
-  socket.on('sendMessage', (data) => {
-    io.to(data.recipient).emit('newMessage', data);
-  });
-
-  socket.on('joinRoom', (roomId) => {
-    socket.join(roomId);
-  });
-
-  socket.on('leaveRoom', (roomId) => {
-    socket.leave(roomId);
+    socket.on('disconnect', () => {
+      console.log('A user disconnected');
+    });
   });
 };
-
-module.exports = handleSocketConnection;

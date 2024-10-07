@@ -1,3 +1,5 @@
+// File: Frontend/src/pages/dashboard.js
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from 'next/head';
@@ -5,23 +7,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Mail, User, Shield, Edit, MessageSquare, Bell, Settings, Moon, Sun, Users, Calendar, Activity } from 'lucide-react';
 import Chat from '../components/Chat';
 import Contacts from '../components/Contacts';
-import { initializeSocket, onNewMessage } from '../utils/socket';
+import { initializeSocket, disconnectSocket } from '../utils/socket';
 
-const Dashboard = () => {
+export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedContact, setSelectedContact] = useState(null);
   const [showChat, setShowChat] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/auth/user", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/user`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -31,13 +31,7 @@ const Dashboard = () => {
         }
         const data = await response.json();
         setUser(data);
-        initializeSocket(data.id);
-
-        onNewMessage((message) => {
-          if (message.sender !== selectedContact?.id) {
-            setNotifications(prev => [...prev, message]);
-          }
-        });
+        initializeSocket(data._id);
       } catch (err) {
         setError(err.message);
         router.push("/login");
@@ -47,7 +41,11 @@ const Dashboard = () => {
     };
 
     fetchUserData();
-  }, [router, selectedContact]);
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -58,9 +56,9 @@ const Dashboard = () => {
     setDarkMode(!darkMode);
   };
 
-  const clearNotifications = () => {
-    setNotifications([]);
-    setShowNotifications(false);
+  const handleSelectContact = (contact) => {
+    setSelectedContact(contact);
+    setShowChat(true);
   };
 
   if (loading) {
@@ -104,34 +102,8 @@ const Dashboard = () => {
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Stealth Space</h2>
           </div>
-          <nav className="p-4">
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className={`flex items-center space-x-2 p-2 rounded-md ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
-                  <Users className="h-5 w-5" />
-                  <span>Contacts</span>
-                </a>
-              </li>
-              <li>
-                <a href="#" className={`flex items-center space-x-2 p-2 rounded-md ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
-                  <Calendar className="h-5 w-5" />
-                  <span>Schedule</span>
-                </a>
-              </li>
-              <li>
-                <a href="#" className={`flex items-center space-x-2 p-2 rounded-md ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
-                  <Activity className="h-5 w-5" />
-                  <span>Activity</span>
-                </a>
-              </li>
-            </ul>
-          </nav>
           <Contacts 
-            onSelectContact={(contact) => {
-              setSelectedContact(contact);
-              setShowChat(true);
-              setNotifications(prev => prev.filter(n => n.sender !== contact.id));
-            }} 
+            onSelectContact={handleSelectContact}
             darkMode={darkMode}
           />
         </aside>
@@ -139,48 +111,6 @@ const Dashboard = () => {
           <header className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm p-4 flex justify-between items-center`}>
             <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Dashboard</h1>
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className={`relative ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                >
-                  <Bell className="h-5 w-5" />
-                  {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                      {notifications.length}
-                    </span>
-                  )}
-                </button>
-                {showNotifications && (
-                  <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5`}>
-                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                      {notifications.map((notification, index) => (
-                        <a
-                          key={index}
-                          href="#"
-                          className={`block px-4 py-2 text-sm ${darkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                          role="menuitem"
-                        >
-                          {notification.content}
-                        </a>
-                      ))}
-                      {notifications.length === 0 && (
-                        <p className={`block px-4 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          No new notifications
-                        </p>
-                      )}
-                      {notifications.length > 0 && (
-                        <button
-                          onClick={clearNotifications}
-                          className={`block w-full text-left px-4 py-2 text-sm ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'}`}
-                        >
-                          Clear all
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
               <button
                 onClick={() => router.push('/profile')}
                 className={`flex items-center ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
@@ -212,12 +142,17 @@ const Dashboard = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
+                  className="h-full"
                 >
-                  <Chat recipient={selectedContact} darkMode={darkMode} />
+                  <Chat 
+                    currentUser={user}
+                    recipient={selectedContact} 
+                    darkMode={darkMode} 
+                  />
                 </motion.div>
               ) : (
                 <motion.div
-                  key="profile"
+                  key="welcome"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
@@ -226,13 +161,12 @@ const Dashboard = () => {
                 >
                   <div className="text-center">
                     <h2 className={`mt-6 text-3xl font-extrabold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                      Welcome to Your Dashboard, {user.username || 'User'}
+                      Welcome to Your Dashboard, {user.username}
                     </h2>
                     <p className={`mt-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      Here's your account information and activity summary
+                      Select a contact from the sidebar to start chatting
                     </p>
                   </div>
-
                   <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div className="flex justify-center">
@@ -247,7 +181,6 @@ const Dashboard = () => {
                           transition={{ type: "spring", stiffness: 300 }}
                         />
                       </div>
-
                       <div className="space-y-4">
                         <motion.div 
                           className={`flex items-center space-x-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
@@ -256,15 +189,13 @@ const Dashboard = () => {
                           <Mail className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                           <span>{user.email}</span>
                         </motion.div>
-                        {user.username && (
-                          <motion.div 
-                            className={`flex items-center space-x-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
-                            whileHover={{ x: 5 }}
-                          >
-                            <User className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                            <span>{user.username}</span>
-                          </motion.div>
-                        )}
+                        <motion.div 
+                          className={`flex items-center space-x-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                          whileHover={{ x: 5 }}
+                        >
+                          <User className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                          <span>{user.username}</span>
+                        </motion.div>
                         <motion.div 
                           className={`flex items-center space-x-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                           whileHover={{ x: 5 }}
@@ -274,7 +205,6 @@ const Dashboard = () => {
                         </motion.div>
                       </div>
                     </div>
-
                     <div className={`space-y-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
                       <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Activity Summary</h3>
                       <div className="space-y-4">
@@ -302,7 +232,6 @@ const Dashboard = () => {
                       </div>
                     </div>
                   </div>
-
                   <div className={`mt-8 p-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Quick Actions</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -332,6 +261,4 @@ const Dashboard = () => {
       </div>
     </>
   );
-};
-
-export default Dashboard;
+}
