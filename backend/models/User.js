@@ -16,8 +16,14 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: '', // Or can be omitted if not required
+    default: '',
   },
+  isOnline: {
+    type: Boolean,
+    default: false,
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -122,7 +122,10 @@ Stealth-Space/
 │   ├── routes/                      // Routes directory
 │   │   ├── userRoutes.js            // User-related routes
 │   │   ├── chatRoutes.js            // Chat-related routes
+│   │   └── messageRoutes.js
 │   │   └── authRoutes.js            // Authentication routes
+│   ├── utils/                       // Utility functions directory
+│   │   └── encryption.js            // Encryption utility function
 │
 ├── Frontend/
 │   ├── .eslintrc.json               // ESLint configuration
@@ -135,17 +138,19 @@ Stealth-Space/
 │   ├── tailwind.config.js            // Tailwind CSS configuration
 │   ├── src/
 │   │   ├── components/              // Reusable components directory
+│   │   │   ├── Contacts.js
 │   │   │   └── Chat.js              // Chat component
 │   │   ├── pages/                   // Pages directory
 │   │   │   ├── index.js             // Home component
 │   │   │   ├── login.js             // Login component
+│   │   │   └── _app.js
 │   │   │   ├── register.js          // Registration component
 │   │   │   ├── dashboard.js          // Dashboard component
-│   │   │   └── profile.js           // Profile component
+│   │   │   └── profile.js
 │   │   └── styles/                  // Styles directory
 │   │       └── globals.css          // Global styles file
 │   │   └── utils/                   // Utility functions directory
-│   │       └── socket.css           // Socket-related styles
+│   │       └── socket.js
 │
 └── README.md                         // Project overview and instructions
 

@@ -1,9 +1,9 @@
-// backend/routes/authRoutes.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
-const { verifyToken } = require('../middleware/auth'); // Middleware for token verification
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -55,7 +55,7 @@ router.post('/login', async (req, res) => {
 // User data endpoint
 router.get('/user', verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password'); // Exclude password
+    const user = await User.findById(req.user.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -75,7 +75,7 @@ router.put('/profile', verifyToken, async (req, res) => {
       req.user.id, 
       { username, avatar }, 
       { new: true }
-    ).select('-password'); // Exclude password from the response
+    ).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -85,6 +85,46 @@ router.put('/profile', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Error updating profile:', error);
     return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Request password reset
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+    // TODO: Send email with reset token (implement email sending logic here)
+    res.json({ message: 'Password reset email sent' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error in password reset request' });
+  }
+});
+
+// Reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error in password reset' });
   }
 });
 

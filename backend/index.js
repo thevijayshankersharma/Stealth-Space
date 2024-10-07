@@ -1,4 +1,3 @@
-// index.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -8,7 +7,8 @@ const mongoose = require('mongoose');
 const handleSocketConnection = require('./socketEvents');
 const chatRoutes = require('./routes/chatRoutes');
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes'); // Import the user routes
+const userRoutes = require('./routes/userRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 dotenv.config();
 
@@ -32,16 +32,17 @@ app.use((req, res, next) => {
 });
 
 // Mounting routes
-app.use('/api/chat', chatRoutes); // Chat routes
-app.use('/api/auth', authRoutes); // Auth routes
-app.use('/api/auth', userRoutes); // User profile update routes
+app.use('/api/chat', chatRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/stealth-space')
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => {
     console.error('MongoDB connection error:', err);
-    process.exit(1); // Exit if connection fails
+    process.exit(1);
   });
 
 // Socket.IO connection
